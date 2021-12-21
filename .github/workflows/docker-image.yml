@@ -25,4 +25,4 @@ jobs:
       uses: docker/build-push-action@v2
       with:
         push: ${{ github.event_name != 'pull_request' }}
-        tags: NUKIB/misp-modules:latest
+        tags: nukib/misp-modules:latest
