@@ -26,3 +26,8 @@ jobs:
       with:
         push: ${{ github.event_name != 'pull_request' }}
         tags: ghcr.io/nukib/misp-modules:latest
+    - 
+      name: Container scan
+      uses: azure/container-scan@v0
+      with:
+        image-name: ghcr.io/nukib/misp-modules:latest
