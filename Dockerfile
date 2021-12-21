@@ -10,9 +10,8 @@ RUN sed -i -e 's/enabled=0/enabled=1/' /etc/yum.repos.d/CentOS-Stream-PowerTools
 # Build stage that will build required python modules
 FROM base as python-build
 ENV MISP_MODULES_VERSION main
-RUN yum install -y python39-devel python39-wheel gcc gcc-c++ git-core ssdeep-devel poppler-cpp-devel
-COPY pip.conf /root/.config/pip/pip.conf
-RUN mkdir /source && \
+RUN yum install -y python39-devel python39-wheel gcc gcc-c++ git-core ssdeep-devel poppler-cpp-devel && \
+    mkdir /source && \
     cd /source && \
     curl -L https://github.com/MISP/misp-modules/archive/$MISP_MODULES_VERSION.tar.gz | tar zx --strip-components=1 && \
     pip3 wheel --wheel-dir /wheels -r REQUIREMENTS
