@@ -2,6 +2,7 @@
 FROM quay.io/centos/centos:stream8 as base
 ENV LC_ALL=C.UTF-8
 RUN sed -i -e 's/enabled=0/enabled=1/' /etc/yum.repos.d/CentOS-Stream-PowerTools.repo && \
+    yum update -y && \
     yum install -y epel-release && \
     yum module install -y python39 && \
     alternatives --set python3 /usr/bin/python3.9 && \
