@@ -24,6 +24,7 @@ jobs:
     - 
       name: Test
       run: |
+        sudo apt-get install -y wait-for-it
         docker run --rm -p 127.0.0.1:6666:6666 ${{ env.TEST_TAG }} &
         wait-for-it localhost:6666 -t 30
         curl http://localhost:6666/modules
