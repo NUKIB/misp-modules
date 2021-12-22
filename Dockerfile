@@ -2,6 +2,7 @@
 FROM quay.io/centos/centos:stream8 as base
 ENV LC_ALL=C.UTF-8
 RUN sed -i -e 's/enabled=0/enabled=1/' /etc/yum.repos.d/CentOS-Stream-PowerTools.repo && \
+    echo "tsflags=nodocs" >> /etc/yum.conf && \
     yum update -y && \
     yum install -y epel-release && \
     yum module install -y python39 && \
@@ -15,7 +16,7 @@ RUN yum install -y python39-devel python39-wheel gcc gcc-c++ git-core ssdeep-dev
     mkdir /source && \
     cd /source && \
     curl -L https://github.com/MISP/misp-modules/archive/$MISP_MODULES_VERSION.tar.gz | tar zx --strip-components=1 && \
-    pip3 wheel --wheel-dir /wheels -r REQUIREMENTS
+    pip3 --no-cache-dir wheel --wheel-dir /wheels -r REQUIREMENTS
 
 # Final image
 FROM base
