@@ -11,7 +11,7 @@ RUN sed -i -e 's/enabled=0/enabled=1/' /etc/yum.repos.d/CentOS-Stream-PowerTools
 
 # Build stage that will build required python modules
 FROM base as python-build
-ENV MISP_MODULES_VERSION main
+ARG MISP_MODULES_VERSION=main
 RUN yum install -y python39-devel python39-wheel gcc gcc-c++ git-core ssdeep-devel poppler-cpp-devel && \
     mkdir /source && \
     cd /source && \
