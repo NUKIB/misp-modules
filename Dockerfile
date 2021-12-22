@@ -26,7 +26,7 @@ RUN yum install -y libglvnd-glx poppler-cpp zbar && \
     rm -rf /var/cache/yum && \
     useradd --create-home --system --user-group misp-modules
 USER misp-modules
-RUN pip3 --no-cache-dir install --no-warn-script-location --user /wheels/* pyfaup censys sentry-sdk==1.5.1 && \
+RUN pip3 --no-cache-dir install --no-warn-script-location --user /wheels/* pyfaup censys uwhois sentry-sdk==1.5.1 && \
     echo "__all__ = ['cache', 'sentry']" > /home/misp-modules/.local/lib/python3.9/site-packages/misp_modules/helpers/__init__.py && \
     chmod -R u-w /home/misp-modules/.local/
 COPY sentry.py /home/misp-modules/.local/lib/python3.9/site-packages/misp_modules/helpers/
