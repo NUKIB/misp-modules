@@ -18,7 +18,7 @@ RUN yum install -y python39-devel python39-wheel gcc gcc-c++ git-core ssdeep-dev
     COMMIT=$(git ls-remote https://github.com/MISP/misp-modules.git $MISP_MODULES_VERSION | cut -f1) && \
     curl -L https://github.com/MISP/misp-modules/archive/$COMMIT.tar.gz | tar zx --strip-components=1 && \
     pip3 --no-cache-dir wheel --wheel-dir /wheels -r REQUIREMENTS && \
-    echo $COMMIT > /misp-modules-commit && 
+    echo $COMMIT > /misp-modules-commit
 
 # Final image
 FROM base
