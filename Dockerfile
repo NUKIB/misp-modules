@@ -1,4 +1,4 @@
-# Base image with python3.9 and enabled powertools and repo repo
+# Base image with python3.9 and enabled powertools and epel repo
 FROM quay.io/centos/centos:stream8 as base
 ENV LC_ALL=C.UTF-8
 RUN sed -i -e 's/enabled=0/enabled=1/' /etc/yum.repos.d/CentOS-Stream-PowerTools.repo && \
@@ -15,17 +15,20 @@ ARG MISP_MODULES_VERSION=main
 RUN yum install -y python39-devel python39-wheel gcc gcc-c++ git-core ssdeep-devel poppler-cpp-devel && \
     mkdir /source && \
     cd /source && \
-    curl -L https://github.com/MISP/misp-modules/archive/$MISP_MODULES_VERSION.tar.gz | tar zx --strip-components=1 && \
-    pip3 --no-cache-dir wheel --wheel-dir /wheels -r REQUIREMENTS
+    COMMIT=$(git ls-remote https://github.com/MISP/misp-modules.git $MISP_MODULES_VERSION | cut -f1) && \
+    curl -L https://github.com/MISP/misp-modules/archive/$COMMIT.tar.gz | tar zx --strip-components=1 && \
+    pip3 --no-cache-dir wheel --wheel-dir /wheels -r REQUIREMENTS && \
+    echo $COMMIT > /misp-modules-commit && 
 
 # Final image
 FROM base
 # Use system certificates for python requests library
 ENV REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-bundle.crt
-COPY --from=python-build /wheels /wheels
 RUN yum install -y libglvnd-glx poppler-cpp zbar && \
     rm -rf /var/cache/yum && \
     useradd --create-home --system --user-group misp-modules
+COPY --from=python-build /wheels /wheels
+COPY --from=python-build /misp-modules-commit /home/misp-modules/
 USER misp-modules
 RUN pip3 --no-cache-dir install --no-warn-script-location --user /wheels/* pyfaup censys sentry-sdk==1.5.1 && \
     echo "__all__ = ['cache', 'sentry']" > /home/misp-modules/.local/lib/python3.9/site-packages/misp_modules/helpers/__init__.py && \
