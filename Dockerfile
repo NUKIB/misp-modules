@@ -1,13 +1,12 @@
 # Base image with python3.9 and enabled powertools and epel repo
 FROM quay.io/centos/centos:stream8 as base
 ENV LC_ALL=C.UTF-8
-RUN sed -i -e 's/enabled=0/enabled=1/' /etc/yum.repos.d/CentOS-Stream-PowerTools.repo && \
-    echo "tsflags=nodocs" >> /etc/yum.conf && \
-    yum update -y && \
-    yum install -y epel-release && \
-    yum module install -y python39 && \
+RUN echo "tsflags=nodocs" >> /etc/yum.conf && \
+    yum update -y --setopt=install_weak_deps=False && \
+    yum install -y epel-release python39 && \
     alternatives --set python3 /usr/bin/python3.9 && \
-    rm -rf /var/cache/yum
+    sed -i -e 's/enabled=0/enabled=1/' /etc/yum.repos.d/CentOS-Stream-PowerTools.repo && \
+    rm -rf /var/cache/dnf
 
 # Build stage that will build required python modules
 FROM base as python-build
@@ -25,7 +24,7 @@ FROM base
 # Use system certificates for python requests library
 ENV REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-bundle.crt
 RUN yum install -y libglvnd-glx poppler-cpp zbar && \
-    rm -rf /var/cache/yum && \
+    rm -rf /var/cache/dnf && \
     useradd --create-home --system --user-group misp-modules
 COPY --from=python-build /wheels /wheels
 COPY --from=python-build /misp-modules-commit /home/misp-modules/
