@@ -1,6 +1,7 @@
 # Base image with python3.9 and enabled powertools and epel repo
-FROM quay.io/centos/centos:stream8 as base
-ENV LC_ALL=C.UTF-8
+ARG BASE_IMAGE=quay.io/centos/centos:stream8
+FROM $BASE_IMAGE as base
+
 RUN echo "tsflags=nodocs" >> /etc/yum.conf && \
     yum update -y --setopt=install_weak_deps=False && \
     yum install -y epel-release python39 && \
@@ -14,8 +15,9 @@ ARG MISP_MODULES_VERSION=main
 RUN yum install -y python39-devel python39-wheel gcc gcc-c++ git-core ssdeep-devel poppler-cpp-devel && \
     mkdir /source && \
     cd /source && \
+    git config --system http.sslVersion tlsv1.3 && \
     COMMIT=$(git ls-remote https://github.com/MISP/misp-modules.git $MISP_MODULES_VERSION | cut -f1) && \
-    curl -L https://github.com/MISP/misp-modules/archive/$COMMIT.tar.gz | tar zx --strip-components=1 && \
+    curl --proto '=https' --tlsv1.3 -sSL https://github.com/MISP/misp-modules/archive/$COMMIT.tar.gz | tar zx --strip-components=1 && \
     pip3 --no-cache-dir wheel --wheel-dir /wheels -r REQUIREMENTS && \
     echo $COMMIT > /misp-modules-commit
 
