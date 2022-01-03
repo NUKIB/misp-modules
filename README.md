@@ -1,10 +1,10 @@
 # MISP Modules
 
-Container image for [MISP modules](https://github.com/MISP/misp-modules) based on CentOS 8 Stream.
+Container image for [MISP modules](https://github.com/MISP/misp-modules) based on CentOS Stream 8.
 
 ## Usage
 
-Download latest image:
+Download the latest image:
 
 ```
 docker pull ghcr.io/nukib/misp-modules:latest
@@ -28,6 +28,6 @@ docker run -d -p 127.0.0.0:6666:6666 ghcr.io/nukib/misp-modules:latest
 
 ## License
 
-This software is licensed under GNU General Public License version 3
+This software is licensed under GNU General Public License version 3. MISP modules is licensed under GNU Affero General Public License version 3.
 
 * Copyright (C) 2022 [National Cyber and Information Security Agency of the Czech republic (NÚKIB)](https://www.nukib.cz/en/)
