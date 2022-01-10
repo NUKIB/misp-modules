@@ -1,10 +1,13 @@
 # Base image with python3.9 and enabled powertools and epel repo
 ARG BASE_IMAGE=quay.io/centos/centos:stream8
 FROM $BASE_IMAGE as base
+# RHEL ubi image doesn't contain epel-release package
+COPY epel/epel.repo /etc/yum.repos.d/
+COPY epel/RPM-GPG-KEY-EPEL-8 /etc/pki/rpm-gpg/
 
 RUN echo "tsflags=nodocs" >> /etc/yum.conf && \
-    yum update -y --setopt=install_weak_deps=False && \
-    yum install -y epel-release python39 && \
+    dnf update -y --setopt=install_weak_deps=False && \
+    dnf install -y python39 && \
     alternatives --set python3 /usr/bin/python3.9 && \
     sed -i -e 's/enabled=0/enabled=1/' /etc/yum.repos.d/CentOS-Stream-PowerTools.repo && \
     rm -rf /var/cache/dnf
@@ -12,7 +15,7 @@ RUN echo "tsflags=nodocs" >> /etc/yum.conf && \
 # Build stage that will build required python modules
 FROM base as python-build
 ARG MISP_MODULES_VERSION=main
-RUN yum install -y python39-devel python39-wheel gcc gcc-c++ git-core ssdeep-devel poppler-cpp-devel && \
+RUN dnf install -y python39-devel python39-wheel gcc gcc-c++ git-core ssdeep-devel poppler-cpp-devel && \
     mkdir /source && \
     cd /source && \
     git config --system http.sslVersion tlsv1.3 && \
@@ -25,7 +28,7 @@ RUN yum install -y python39-devel python39-wheel gcc gcc-c++ git-core ssdeep-dev
 FROM base
 # Use system certificates for python requests library
 ENV REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-bundle.crt
-RUN yum install -y libglvnd-glx poppler-cpp zbar && \
+RUN dnf install -y libglvnd-glx poppler-cpp zbar && \
     rm -rf /var/cache/dnf && \
     useradd --create-home --system --user-group misp-modules
 COPY --from=python-build /wheels /wheels
