@@ -35,7 +35,7 @@ jobs:
       run: |
         docker run --name misp-modules --rm -p 127.0.0.1:6666:6666 ${{ env.TEST_TAG }} &
         sleep 10 # Wait until container is ready
-        curl http://localhost:6666/modules
+        curl --fail http://localhost:6666/modules | jq
         docker stop misp-modules
     - 
       name: Container scan
@@ -50,13 +50,20 @@ jobs:
         platforms: linux/arm64
         tags: ${{ env.TEST_TAG }}
     -
-      name: Login to DockerHub
+      name: Login to GitHub Container Registry
       if: github.event_name != 'pull_request'
       uses: docker/login-action@v1
       with:
         registry: ghcr.io
         username: ${{ github.repository_owner }}
         password: ${{ secrets.GITHUB_TOKEN }}
+    -
+      name: Login to DockerHub
+      if: github.event_name != 'pull_request'
+      uses: docker/login-action@v1
+      with:
+        username: nukib
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
     -
       name: Build and push
       if: github.event_name != 'pull_request'
@@ -65,5 +72,7 @@ jobs:
         context: .
         platforms: linux/amd64,linux/arm64
         push: true
-        tags: ghcr.io/nukib/misp-modules:latest
+        tags: |
+          nukib/misp-modules:latest
+          ghcr.io/nukib/misp-modules:latest
     
