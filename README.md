@@ -2,6 +2,8 @@
 
 Container image for [MISP modules](https://github.com/MISP/misp-modules) based on CentOS Stream 8.
 
+This image is intended to use with [MISP](https://github.com/MISP/misp) image.
+
 ## Usage
 
 Download the latest image:
