@@ -1,14 +1,13 @@
 # Base image with python3.9 and enabled powertools and epel repo
 ARG BASE_IMAGE=quay.io/centos/centos:stream8
 FROM $BASE_IMAGE as base
-# RHEL ubi image doesn't contain epel-release package
-COPY epel/epel.repo /etc/yum.repos.d/
-COPY epel/RPM-GPG-KEY-EPEL-8 /etc/pki/rpm-gpg/
 
+COPY misp-enable-epel.sh /usr/bin/
 RUN echo "tsflags=nodocs" >> /etc/yum.conf && \
     dnf update -y --setopt=install_weak_deps=False && \
     dnf install -y python39 && \
     alternatives --set python3 /usr/bin/python3.9 && \
+    bash /usr/bin/misp-enable-epel.sh && \
     sed -i -e 's/enabled=0/enabled=1/' /etc/yum.repos.d/CentOS-Stream-PowerTools.repo && \
     rm -rf /var/cache/dnf
 
