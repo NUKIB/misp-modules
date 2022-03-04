@@ -14,7 +14,7 @@ RUN echo "tsflags=nodocs" >> /etc/yum.conf && \
 
 # Build stage that will build required python modules
 FROM base as python-build
-RUN dnf install -y --setopt=install_weak_deps=False python39-devel python39-wheel gcc gcc-c++ git-core ssdeep-devel poppler-cpp-devel && \
+RUN dnf install -y --setopt=install_weak_deps=False python39-devel python39-wheel gcc gcc-c++ git-core poppler-cpp-devel && \
     rm -rf /var/cache/dnf
 ARG MISP_MODULES_VERSION=main
 RUN --mount=type=tmpfs,target=/tmp mkdir /tmp/source && \
