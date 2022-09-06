@@ -8,7 +8,7 @@ RUN echo "tsflags=nodocs" >> /etc/yum.conf && \
     dnf install -y python39 && \
     alternatives --set python3 /usr/bin/python3.9 && \
     bash /usr/bin/misp-enable-epel.sh && \
-    sed -i -e 's/enabled=0/enabled=1/' /etc/yum.repos.d/CentOS-Stream-PowerTools.repo && \
+    dnf config-manager --set-enabled powertools && \
     rm -rf /var/cache/dnf
 
 # Build stage that will build required python modules
