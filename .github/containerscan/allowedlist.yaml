@@ -1,3 +1,0 @@
-general:
-  vulnerabilities:
-    - CVE-2019-1010022 # Red Hat Product Security does not consider this to be a vulnerability. See https://access.redhat.com/security/cve/cve-2019-1010022

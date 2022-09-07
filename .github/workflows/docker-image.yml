@@ -47,11 +47,6 @@ jobs:
         sleep 10 # Wait until container is ready
         curl --fail http://localhost:6666/modules | jq
         docker stop misp-modules
-    - 
-      name: Container scan
-      uses: azure/container-scan@v0
-      with:
-        image-name: ${{ env.TEST_TAG }}
     -
       name: Build Docker for linux/arm64
       uses: docker/build-push-action@v2
