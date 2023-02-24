@@ -12,7 +12,7 @@ Download the latest image:
 
 If you don't trust image build by GitHub Actions and stored in GitHub Container Registry or you want to build different MISP modules version, you can build this image by yourself:
 
-    docker build --build-arg MISP_MODULES_VERSION=v2.4.152 -t ghcr.io/nukib/misp-modules https://github.com/NUKIB/misp-modules.git#main
+    docker build --build-arg MISP_MODULES_VERSION=v2.4.165 -t ghcr.io/nukib/misp-modules https://github.com/NUKIB/misp-modules.git#main
 
 Then you can run container from this image:
 
