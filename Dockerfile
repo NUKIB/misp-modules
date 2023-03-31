@@ -1,5 +1,5 @@
 # Base image with python3.9 and enabled powertools and epel repo
-ARG BASE_IMAGE=quay.io/centos/centos:stream8
+ARG BASE_IMAGE=docker.io/almalinux/8-base
 FROM $BASE_IMAGE as base
 
 COPY misp-enable-epel.sh /usr/bin/
@@ -8,6 +8,7 @@ RUN echo "tsflags=nodocs" >> /etc/yum.conf && \
     dnf install -y python39 && \
     alternatives --set python3 /usr/bin/python3.9 && \
     bash /usr/bin/misp-enable-epel.sh && \
+    dnf install -y 'dnf-command(config-manager)' && \
     dnf config-manager --set-enabled powertools && \
     rm -rf /var/cache/dnf
 
@@ -36,7 +37,14 @@ COPY --from=python-build /misp-modules-commit /home/misp-modules/
 USER misp-modules
 RUN pip3 --no-cache-dir install --no-warn-script-location --user /wheels/* sentry-sdk==1.5.1 && \
     echo "__all__ = ['cache', 'sentry']" > /home/misp-modules/.local/lib/python3.9/site-packages/misp_modules/helpers/__init__.py && \
-    chmod -R u-w /home/misp-modules/.local/
+    # permissions fixes to allow run from any uuid. (inefficient, but effective.)
+    #   - remove write from all files/directories,
+    #   - remove execute from non-executable files. 
+    chmod u-w /home/misp-modules && \
+    find /home/misp-modules -type d -exec chmod 555 {} \; && \
+    find /home/misp-modules/.local/etc -type f -exec chmod 444 {} \; && \
+    find /home/misp-modules/.local/ -type f -regex '.+\.py$' -exec chmod 444 {} \; && \
+    chmod -R u-w /home/misp-modules/.local/ 
 COPY sentry.py /home/misp-modules/.local/lib/python3.9/site-packages/misp_modules/helpers/
 
 EXPOSE 6666/tcp
