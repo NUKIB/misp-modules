@@ -1,0 +1,32 @@
+kind: BuildConfig
+apiVersion: build.openshift.io/v1
+metadata:
+  name: misp-modules
+  namespace: misp-test
+  labels:
+    app: misp
+    component: modules
+spec:
+  output:
+    to:
+      kind: DockerImage
+      name: 'harbor-core.apps.ops.sec.yale.edu/library/misp-modules:latest'
+    pushSecret:
+      name: harbor-robot
+  successfulBuildsHistoryLimit: 5
+  failedBuildsHistoryLimit: 5
+  strategy:
+    type: Docker
+    dockerStrategy: {}
+  postCommit: {}
+  source:
+    type: Git
+    git:
+      uri: 'git@github.com:YaleDevSecOps/misp-modules.git'
+      ref: yale-iso
+    contextDir: /
+    sourceSecret:
+      name: deploykey-misp-modules
+  triggers:
+    - type: ConfigChange
+  runPolicy: Serial

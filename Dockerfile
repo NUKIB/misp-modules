@@ -17,12 +17,13 @@ FROM base as python-build
 RUN dnf install -y --setopt=install_weak_deps=False python39-devel python39-wheel gcc gcc-c++ git-core poppler-cpp-devel && \
     rm -rf /var/cache/dnf
 ARG MISP_MODULES_VERSION=main
-RUN --mount=type=tmpfs,target=/tmp mkdir /tmp/source && \
-    cd /tmp/source && \
+# Use of tmpfs is not allowed in OpenShift build envs: --mount=type=tmpfs,target=/tmp
+RUN mkdir /tmp/source && cd /tmp/source && \
     git config --system http.sslVersion tlsv1.3 && \
     COMMIT=$(git ls-remote https://github.com/MISP/misp-modules.git $MISP_MODULES_VERSION | cut -f1) && \
     curl --proto '=https' --tlsv1.3 --fail -sSL https://github.com/MISP/misp-modules/archive/$COMMIT.tar.gz | tar zx --strip-components=1 && \
     pip3 --no-cache-dir wheel --wheel-dir /wheels -r REQUIREMENTS && \
+    rm -Rf /tmp/source && \
     echo $COMMIT > /misp-modules-commit
 
 # Final image
