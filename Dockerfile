@@ -45,7 +45,10 @@ RUN pip3 --no-cache-dir install --no-warn-script-location --user /wheels/* sentr
     find /home/misp-modules -type d -exec chmod 555 {} \; && \
     find /home/misp-modules/.local/etc -type f -exec chmod 444 {} \; && \
     find /home/misp-modules/.local/ -type f -regex '.+\.py$' -exec chmod 444 {} \; && \
-    chmod -R u-w /home/misp-modules/.local/ 
+    chmod -R u-w /home/misp-modules/.local/
+# Binaries need to be available for non-"misp-modules" UIDs:
+ENV PATH="/home/misp-modules/.local/bin:${PATH}"
+ENV PYTHONPATH=":/home/misp-modules/.local/lib/python3.9/site-packages"
 COPY sentry.py /home/misp-modules/.local/lib/python3.9/site-packages/misp_modules/helpers/
 
 EXPOSE 6666/tcp
