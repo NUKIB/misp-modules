@@ -1,0 +1,59 @@
+# Base image with python3.9 and enabled powertools and epel repo
+ARG BASE_IMAGE=docker.io/library/python:3.9-slim
+# Can't use UBI as drop-in replacement.  Will need package name tuning to get the required binaries...
+# ARG BASE_IMAGE=registry.access.redhat.com/ubi8/ubi
+FROM $BASE_IMAGE as base
+
+ENV \
+    # Set commonly recommended environment variables for Python (do not buffer stfout/stderr)
+    PYTHONUNBUFFERED=1 \
+    # Suppress caching of pip install files:
+    PIP_NO_CACHE_DIR=off 
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    # Refresh and update base image:
+    apt-get update && apt-get -y upgrade &&\
+    # remove obsoleted packages from the prior upgrade:
+    apt-get -y install curl &&\
+    apt-get -y autoremove
+
+# Build stage that will build required python modules
+FROM base as python-build
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get -y install gcc g++ git libpoppler-cpp-dev
+
+ARG MISP_MODULES_VERSION=main
+RUN --mount=type=tmpfs,target=/tmp \
+    mkdir /tmp/source && cd /tmp/source && \
+    git config --system http.sslVersion tlsv1.3 && \
+    COMMIT=$(git ls-remote https://github.com/MISP/misp-modules.git $MISP_MODULES_VERSION | cut -f1) && \
+    curl --proto '=https' --tlsv1.3 --fail -sSL https://github.com/MISP/misp-modules/archive/$COMMIT.tar.gz | tar zx --strip-components=1 && \
+    python -m pip install --upgrade pip &&\
+    python -m pip --no-cache-dir wheel --wheel-dir /wheels -r REQUIREMENTS && \
+    # rm -Rf /tmp/source && \
+    echo $COMMIT > /misp-modules-commit
+
+# Final image
+FROM base
+
+# Install system binaries needed by modules:
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get -y install libgl1 libglib2.0-0 libpoppler-cpp0v5 libxext6 libxrender1 libzbar0  && \
+    useradd --create-home --system --user-group misp-modules
+
+# Install misp-module wheels, compiled in the python-build stage:
+COPY --from=python-build /wheels /wheels
+COPY --from=python-build /misp-modules-commit /home/misp-modules/
+USER misp-modules
+RUN python -m pip install --upgrade pip &&\
+    python -m pip --no-cache-dir install --no-warn-script-location --user /wheels/* sentry-sdk==1.5.1 &&\
+    echo "__all__ = ['cache', 'sentry']" > /home/misp-modules/.local/lib/python3.9/site-packages/misp_modules/helpers/__init__.py
+
+COPY sentry.py /home/misp-modules/.local/lib/python3.9/site-packages/misp_modules/helpers/
+
+EXPOSE 6666/tcp
+CMD ["/home/misp-modules/.local/bin/misp-modules", "-l", "0.0.0.0"]
+HEALTHCHECK CMD curl -s -o /dev/null localhost:6666/modules

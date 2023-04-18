@@ -10,50 +10,53 @@ ENV \
     # Suppress caching of pip install files:
     PIP_NO_CACHE_DIR=off 
 
-RUN --mount=type=cache,target=/var/cache/dnf \
-    # echo /etc/yum.conf && \
-    microdnf update --nodocs --setopt=keepcache=0 --setopt=install_weak_deps=0 &&\
+RUN --mount=type=cache,target=/var/cache/dnf,sharing=locked \
+    microdnf update --nodocs --setopt=install_weak_deps=0 &&\
     microdnf module enable python39 &&\
     microdnf install curl findutils procps-ng python39 tar util-linux-user &&\
     alternatives --set python3 /usr/bin/python3.9 &&\
     microdnf install dnf dnf-plugins-core &&\
     dnf config-manager --set-enabled powertools &&\
     dnf remove -y --setopt protected_packages=1 dnf dnf-plugins-core
+    # Classically, we would clean the DNF cache, but now we are the cache mount type to take care of this...
     # microdnf clean all &&\
     # rm -rf /var/cache/dnf
 
 # Build stage that will build required python modules
 FROM base as python-build
-RUN --mount=type=cache,target=/var/cache/dnf \
+RUN --mount=type=cache,target=/var/cache/dnf,sharing=locked \
     microdnf install --nodocs --setopt=install_weak_deps=0 python39-devel python39-wheel gcc gcc-c++ git-core poppler-cpp-devel
     #rm -rf /var/cache/dnf
 ARG MISP_MODULES_VERSION=main
-# Use of tmpfs is not allowed in OpenShift build envs: --mount=type=tmpfs,target=/tmp
 RUN --mount=type=tmpfs,target=/tmp \
     mkdir /tmp/source && cd /tmp/source && \
     git config --system http.sslVersion tlsv1.3 && \
     COMMIT=$(git ls-remote https://github.com/MISP/misp-modules.git $MISP_MODULES_VERSION | cut -f1) && \
     curl --proto '=https' --tlsv1.3 --fail -sSL https://github.com/MISP/misp-modules/archive/$COMMIT.tar.gz | tar zx --strip-components=1 && \
-    pip3 --no-cache-dir wheel --wheel-dir /wheels -r REQUIREMENTS && \
-    rm -Rf /tmp/source && \
+    python3 -m pip --no-cache-dir wheel --wheel-dir /wheels -r REQUIREMENTS && \
     echo $COMMIT > /misp-modules-commit
 
 # Final image
 FROM base
 # Use system certificates for python requests library
 ENV REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-bundle.crt
-# EPEL needed for "zbar" (bar code reader) package:
+
+# Install system binaries needed by modules:
+# (EPEL needed for "zbar" (bar code reader) package)
 COPY misp-enable-epel.sh /usr/bin/
-RUN --mount=type=cache,target=/var/cache/dnf \
+RUN --mount=type=cache,target=/var/cache/dnf,sharing=locked \
     bash /usr/bin/misp-enable-epel.sh &&\
     microdnf install --nodocs --setopt=install_weak_deps=0 libglvnd-glx poppler-cpp zbar && \
     # microdnf clean all &&\
     # rm -rf /var/cache/dnf &&\
     useradd --create-home --system --user-group misp-modules
+
+# Install misp-module wheels, compiled in the python-build stage:
 COPY --from=python-build /wheels /wheels
 COPY --from=python-build /misp-modules-commit /home/misp-modules/
 USER misp-modules
-RUN pip3 --no-cache-dir install --no-warn-script-location --user /wheels/* sentry-sdk==1.5.1 && \
+RUN python3 -m pip install --upgrade pip &&\
+    python3 -m pip --no-cache-dir install --no-warn-script-location --user /wheels/* sentry-sdk==1.5.1 && \
     echo "__all__ = ['cache', 'sentry']" > /home/misp-modules/.local/lib/python3.9/site-packages/misp_modules/helpers/__init__.py && \
     # permissions fixes to allow run from any uuid. (inefficient, but effective.)
     #   - remove write from all files/directories,
@@ -63,6 +66,7 @@ RUN pip3 --no-cache-dir install --no-warn-script-location --user /wheels/* sentr
     find /home/misp-modules/.local/etc -type f -exec chmod 444 {} \; && \
     find /home/misp-modules/.local/ -type f -regex '.+\.py$' -exec chmod 444 {} \; && \
     chmod -R u-w /home/misp-modules/.local/
+
 # Binaries need to be available for non-"misp-modules" UIDs:
 ENV PATH="/home/misp-modules/.local/bin:${PATH}"
 ENV PYTHONPATH=":/home/misp-modules/.local/lib/python3.9/site-packages"

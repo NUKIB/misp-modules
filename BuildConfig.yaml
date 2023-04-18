@@ -1,3 +1,7 @@
+# Sample OpenShift BuildConfig to enable the OpenShift to build this container image and push to a 
+# remote registry (docker.io/jgregmac/misp-modules:latest is this example).
+# A deploykey for pushing the image would need to be present in the secret "deploykey-misp-modules".
+
 kind: BuildConfig
 apiVersion: build.openshift.io/v1
 metadata:
@@ -10,7 +14,7 @@ spec:
   output:
     to:
       kind: DockerImage
-      name: 'harbor-core.apps.ops.sec.yale.edu/library/misp-modules:latest'
+      name: 'docker.io/jgregmac/misp-modules:latest'
     pushSecret:
       name: harbor-robot
   successfulBuildsHistoryLimit: 5
@@ -23,7 +27,7 @@ spec:
     type: Git
     git:
       uri: 'git@github.com:YaleDevSecOps/misp-modules.git'
-      ref: yale-iso
+      ref: main
     contextDir: /
     sourceSecret:
       name: deploykey-misp-modules
