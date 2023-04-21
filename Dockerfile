@@ -5,7 +5,7 @@ FROM $BASE_IMAGE as base
 COPY misp-enable-epel.sh /usr/bin/
 RUN echo "tsflags=nodocs" >> /etc/yum.conf && \
     dnf update -y --setopt=install_weak_deps=False && \
-    dnf install -y python39 && \
+    dnf install -y python39 dnf-plugins-core && \
     alternatives --set python3 /usr/bin/python3.9 && \
     bash /usr/bin/misp-enable-epel.sh && \
     dnf config-manager --set-enabled powertools && \
