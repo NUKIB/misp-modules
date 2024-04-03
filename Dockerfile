@@ -1,5 +1,5 @@
 # Base image with python3.11 and enabled powertools and epel repo
-ARG BASE_IMAGE=quay.io/centos/centos:stream8
+ARG BASE_IMAGE=almalinux:8
 FROM $BASE_IMAGE as base
 
 COPY misp-enable-epel.sh /usr/bin/
@@ -44,4 +44,4 @@ COPY sentry.py /home/misp-modules/.local/lib/python3.11/site-packages/misp_modul
 
 EXPOSE 6666/tcp
 CMD ["/home/misp-modules/.local/bin/misp-modules", "-l", "0.0.0.0"]
-HEALTHCHECK CMD curl -s -o /dev/null localhost:6666/healthcheck
+HEALTHCHECK CMD curl -s localhost:6666/healthcheck

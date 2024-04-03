@@ -1,6 +1,6 @@
 # MISP Modules
 
-Container image for [MISP modules](https://github.com/MISP/misp-modules) based on CentOS Stream 8.
+Container image for [MISP modules](https://github.com/MISP/misp-modules) based on AlmaLinux 8.
 
 This image is intended to use with [MISP](https://github.com/MISP/misp) image.
 
@@ -26,4 +26,4 @@ Then you can run container from this image:
 
 This software is licensed under GNU General Public License version 3. MISP modules is licensed under GNU Affero General Public License version 3.
 
-* Copyright (C) 2022 [National Cyber and Information Security Agency of the Czech republic (NÚKIB)](https://www.nukib.cz/en/)
+* Copyright (C) 2022-2024 [National Cyber and Information Security Agency of the Czech republic (NÚKIB)](https://www.nukib.cz/en/)
