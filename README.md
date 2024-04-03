@@ -26,4 +26,4 @@ Then you can run container from this image:
 
 This software is licensed under GNU General Public License version 3. MISP modules is licensed under GNU Affero General Public License version 3.
 
-* Copyright (C) 2022-2024 [National Cyber and Information Security Agency of the Czech republic (NÚKIB)](https://www.nukib.cz/en/)
+* Copyright (C) 2022-2024 [National Cyber and Information Security Agency of the Czech Republic (NÚKIB)](https://nukib.gov.cz/en/) 🇨🇿
