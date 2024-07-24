@@ -1,6 +1,6 @@
 # Base image with python3.11 and enabled powertools and epel repo
 ARG BASE_IMAGE=almalinux:8
-FROM $BASE_IMAGE as base
+FROM $BASE_IMAGE AS base
 
 COPY misp-enable-epel.sh /usr/bin/
 RUN set -x && \
@@ -13,7 +13,7 @@ RUN set -x && \
     rm -rf /var/cache/dnf
 
 # Build stage that will build required python modules
-FROM base as python-build
+FROM base AS python-build
 RUN dnf install -y --setopt=install_weak_deps=False python3.11-devel python3.11-wheel gcc gcc-c++ git-core poppler-cpp-devel && \
     rm -rf /var/cache/dnf
 ARG MISP_MODULES_VERSION=main
