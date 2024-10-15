@@ -1,6 +1,6 @@
 # MISP Modules
 
-Container image for [MISP modules](https://github.com/MISP/misp-modules) based on AlmaLinux 8.
+Container image for [MISP modules](https://github.com/MISP/misp-modules) based on AlmaLinux 9.
 
 This image is intended to use with [MISP](https://github.com/MISP/misp) image.
 
