@@ -1,7 +1,7 @@
 ARG BASE_IMAGE=almalinux:9
-ARG PYTHON_VERSION=3.11
+ARG PYTHON_VERSION=3.12
 
-# Base image with python3.11 and enabled powertools and epel repo
+# Base image with python3.12 and enabled powertools and epel repo
 FROM $BASE_IMAGE AS base
 ARG PYTHON_VERSION
 ENV PYTHON_VERSION=$PYTHON_VERSION
@@ -18,11 +18,12 @@ RUN set -x && \
 
 # Build stage that will build required python modules
 FROM base AS python-build
-RUN dnf install -y --setopt=install_weak_deps=False python${PYTHON_VERSION}-devel python${PYTHON_VERSION}-wheel gcc gcc-c++ git-core poppler-cpp-devel && \
+RUN dnf install -y --setopt=install_weak_deps=False python${PYTHON_VERSION}-devel python${PYTHON_VERSION}-wheel gcc-toolset-14 git-core poppler-cpp-devel && \
     rm -rf /var/cache/dnf && \
     curl -sSL https://install.python-poetry.org | python3 -
 ARG MISP_MODULES_VERSION=main
 RUN --mount=type=tmpfs,target=/tmp set -x && \
+    source scl_source enable gcc-toolset-14 && \
     mkdir /tmp/source && \
     cd /tmp/source && \
     git config --system http.sslVersion tlsv1.3 && \
