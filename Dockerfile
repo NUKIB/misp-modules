@@ -20,7 +20,8 @@ RUN set -x && \
 FROM base AS python-build
 RUN dnf install -y --setopt=install_weak_deps=False python${PYTHON_VERSION}-devel python${PYTHON_VERSION}-wheel gcc-toolset-14 git-core poppler-cpp-devel && \
     rm -rf /var/cache/dnf && \
-    curl -sSL https://install.python-poetry.org | python3 -
+    curl -sSL https://install.python-poetry.org | python3 - && \
+    /root/.local/bin/poetry self add poetry-plugin-export
 ARG MISP_MODULES_VERSION=main
 RUN --mount=type=tmpfs,target=/tmp set -x && \
     source scl_source enable gcc-toolset-14 && \
@@ -31,7 +32,7 @@ RUN --mount=type=tmpfs,target=/tmp set -x && \
     curl --proto '=https' --tlsv1.3 --fail -sSL https://github.com/MISP/misp-modules/archive/$COMMIT.tar.gz | tar zx --strip-components=1 && \
     sed -i "s/^python = .*/python = \"$(python3 -c 'import platform; print(platform.python_version())')\"/" pyproject.toml && \
     /root/.local/bin/poetry lock && \
-    /root/.local/bin/poetry export --with unstable --without-hashes -f requirements.txt -o requirements.txt && \
+    /root/.local/bin/poetry export -E all --without-hashes -f requirements.txt -o requirements.txt && \
     pip3 --no-cache-dir wheel --wheel-dir /wheels -r requirements.txt && \
     pip3 --no-cache-dir wheel --wheel-dir /wheels . && \
     echo $COMMIT > /misp-modules-commit
@@ -47,6 +48,7 @@ COPY --from=python-build /wheels /wheels
 COPY --from=python-build /misp-modules-commit /home/misp-modules/
 USER misp-modules
 RUN pip3 --no-cache-dir install --no-warn-script-location --user /wheels/* sentry-sdk==2.16.0 orjson && \
+    mkdir -p /home/misp-modules/.local/lib/python${PYTHON_VERSION}/site-packages/misp_modules/helpers && \
     echo "__all__ = ['cache', 'sentry']" > /home/misp-modules/.local/lib/python${PYTHON_VERSION}/site-packages/misp_modules/helpers/__init__.py && \
     chmod -R u-w /home/misp-modules/.local/
 COPY sentry.py /home/misp-modules/.local/lib/python${PYTHON_VERSION}/site-packages/misp_modules/helpers/
