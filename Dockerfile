@@ -9,22 +9,24 @@ COPY misp-enable-epel.sh /usr/bin/
 RUN set -x && \
     echo "tsflags=nodocs" >> /etc/yum.conf && \
     dnf update -y --setopt=install_weak_deps=False && \
-    dnf install -y python${PYTHON_VERSION} python${PYTHON_VERSION}-pip dnf-plugins-core && \
+    dnf install -y python${PYTHON_VERSION}  && \
     alternatives --install /usr/bin/python3 python /usr/bin/python${PYTHON_VERSION} 50 && \
-    alternatives --install /usr/bin/pip3 pip /usr/bin/pip${PYTHON_VERSION} 50 && \
     bash /usr/bin/misp-enable-epel.sh && \
-    dnf config-manager --set-enabled crb && \
     rm -rf /var/cache/dnf
 
 # Build stage that will build required python modules
 FROM base AS python-build
-RUN dnf install -y --setopt=install_weak_deps=False python${PYTHON_VERSION}-devel python${PYTHON_VERSION}-wheel gcc-toolset-14 git-core poppler-cpp-devel && \
+RUN dnf install -y dnf-plugins-core && \
+    dnf config-manager --set-enabled crb && \
+    dnf install -y --setopt=install_weak_deps=False python${PYTHON_VERSION}-devel python${PYTHON_VERSION}-pip python${PYTHON_VERSION}-wheel gcc-toolset-14 git-core poppler-cpp-devel && \
     rm -rf /var/cache/dnf && \
+    alternatives --install /usr/bin/pip3 pip /usr/bin/pip${PYTHON_VERSION} 50 && \
     curl --proto '=https' --tlsv1.3 -sSL https://install.python-poetry.org | python3 - && \
     /root/.local/bin/poetry self add poetry-plugin-export
 ARG MISP_MODULES_VERSION=main
-RUN --mount=type=tmpfs,target=/tmp set -x && \
-    source scl_source enable gcc-toolset-14 && \
+ENV POETRY_CACHE_DIR=/tmp/pypoetry/
+RUN --mount=type=tmpfs,target=/tmp source scl_source enable gcc-toolset-14 && \
+    set -x && \
     mkdir /tmp/source && \
     cd /tmp/source && \
     git config --system http.sslVersion tlsv1.3 && \
@@ -33,8 +35,11 @@ RUN --mount=type=tmpfs,target=/tmp set -x && \
     sed -i "s/^python = .*/python = \"$(python3 -c 'import platform; print(platform.python_version())')\"/" pyproject.toml && \
     /root/.local/bin/poetry lock && \
     /root/.local/bin/poetry export -E all --without-hashes -f requirements.txt -o requirements.txt && \
-    pip3 --no-cache-dir wheel --wheel-dir /wheels -r requirements.txt && \
-    pip3 --no-cache-dir wheel --no-deps --wheel-dir /wheels . && \
+    pip3 --no-cache-dir wheel --wheel-dir /tmp/wheels -r requirements.txt && \
+    pip3 --no-cache-dir wheel --no-deps --wheel-dir /tmp/wheels . && \
+    python3 -m venv /misp-modules && \
+    source /misp-modules/bin/activate && \
+    pip3 --no-cache-dir install /tmp/wheels/* sentry-sdk==2.16.0 && \
     echo $COMMIT > /misp-modules-commit
 
 # Final image
@@ -44,12 +49,11 @@ ENV REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-bundle.crt
 RUN dnf install -y --setopt=install_weak_deps=False libglvnd-glx poppler-cpp zbar && \
     rm -rf /var/cache/dnf && \
     useradd --create-home --system --user-group misp-modules
-COPY --from=python-build /wheels /wheels
+COPY --from=python-build /misp-modules /misp-modules
 COPY --from=python-build /misp-modules-commit /home/misp-modules/
-USER misp-modules
 COPY --chmod=755 misp-modules.py /usr/bin/misp-modules
-RUN pip3 --no-cache-dir install --no-warn-script-location --user /wheels/* sentry-sdk==2.16.0 && \
-    /usr/bin/misp-modules --test
+USER misp-modules
+RUN /usr/bin/misp-modules --test
 
 EXPOSE 6666/tcp
 CMD ["/usr/bin/misp-modules", "--listen", "0.0.0.0"]

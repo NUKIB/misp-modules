@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/misp-modules/bin/python
 import os
 import sys
 from misp_modules.__main__ import main
@@ -11,7 +11,7 @@ if sentry_dsn:
 
     sentry_sdk.init(
         dsn=sentry_dsn,
-        ca_certs="/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem",  # CentOS cert bundle
+        ca_certs="/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem",  # System cert bundle
         integrations=[TornadoIntegration()]
     )
 
