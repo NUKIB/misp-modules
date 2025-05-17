@@ -34,7 +34,7 @@ RUN --mount=type=tmpfs,target=/tmp set -x && \
     /root/.local/bin/poetry lock && \
     /root/.local/bin/poetry export -E all --without-hashes -f requirements.txt -o requirements.txt && \
     pip3 --no-cache-dir wheel --wheel-dir /wheels -r requirements.txt && \
-    pip3 --no-cache-dir wheel --wheel-dir /wheels . && \
+    pip3 --no-cache-dir wheel --no-deps --wheel-dir /wheels . && \
     echo $COMMIT > /misp-modules-commit
 
 # Final image
@@ -47,12 +47,10 @@ RUN dnf install -y --setopt=install_weak_deps=False libglvnd-glx poppler-cpp zba
 COPY --from=python-build /wheels /wheels
 COPY --from=python-build /misp-modules-commit /home/misp-modules/
 USER misp-modules
-RUN pip3 --no-cache-dir install --no-warn-script-location --user /wheels/* sentry-sdk==2.16.0 orjson && \
-    mkdir -p /home/misp-modules/.local/lib/python${PYTHON_VERSION}/site-packages/misp_modules/helpers/ && \
-    echo "__all__ = ['cache', 'sentry']" > /home/misp-modules/.local/lib/python${PYTHON_VERSION}/site-packages/misp_modules/helpers/__init__.py && \
-    chmod -R u-w /home/misp-modules/.local/
-COPY sentry.py /home/misp-modules/.local/lib/python${PYTHON_VERSION}/site-packages/misp_modules/helpers/
+COPY --chmod=755 misp-modules.py /usr/bin/misp-modules
+RUN pip3 --no-cache-dir install --no-warn-script-location --user /wheels/* sentry-sdk==2.16.0 && \
+    /usr/bin/misp-modules --test
 
 EXPOSE 6666/tcp
-CMD ["/home/misp-modules/.local/bin/misp-modules", "-l", "0.0.0.0"]
+CMD ["/usr/bin/misp-modules", "--listen", "0.0.0.0"]
 HEALTHCHECK CMD curl -s localhost:6666/healthcheck
