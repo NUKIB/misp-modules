@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 import os
+import sys
+from misp_modules.__main__ import main
 
 sentry_dsn = os.getenv("SENTRY_DSN")
 
@@ -13,12 +15,4 @@ if sentry_dsn:
         integrations=[TornadoIntegration()]
     )
 
-
-def selftest():
-    if not sentry_dsn:
-        return 'SENTRY_DSN env variable is not set. Helper will be disabled.'
-
-
-if __name__ == "__main__":
-    if selftest() is None:
-        sentry_sdk.capture_exception(Exception("This is an example of an error message."))
+sys.exit(main())
