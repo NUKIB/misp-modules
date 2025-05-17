@@ -9,7 +9,7 @@ COPY misp-enable-epel.sh /usr/bin/
 RUN set -x && \
     echo "tsflags=nodocs" >> /etc/yum.conf && \
     dnf update -y --setopt=install_weak_deps=False && \
-    dnf install -y python${PYTHON_VERSION}  && \
+    dnf install -y python${PYTHON_VERSION} && \
     alternatives --install /usr/bin/python3 python /usr/bin/python${PYTHON_VERSION} 50 && \
     bash /usr/bin/misp-enable-epel.sh && \
     rm -rf /var/cache/dnf
@@ -38,8 +38,7 @@ RUN --mount=type=tmpfs,target=/tmp source scl_source enable gcc-toolset-14 && \
     pip3 --no-cache-dir wheel --wheel-dir /tmp/wheels -r requirements.txt && \
     pip3 --no-cache-dir wheel --no-deps --wheel-dir /tmp/wheels . && \
     python3 -m venv /misp-modules && \
-    source /misp-modules/bin/activate && \
-    pip3 --no-cache-dir install /tmp/wheels/* sentry-sdk==2.16.0 && \
+    /misp-modules/bin/pip --no-cache-dir install /tmp/wheels/* sentry-sdk==2.16.0 && \
     echo $COMMIT > /misp-modules-commit
 
 # Final image
@@ -48,13 +47,14 @@ FROM base
 ENV REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-bundle.crt
 RUN dnf install -y --setopt=install_weak_deps=False libglvnd-glx poppler-cpp zbar && \
     rm -rf /var/cache/dnf && \
-    useradd --create-home --system --user-group misp-modules
+    useradd --create-home --system --user-group misp-modules && \
+    mkdir /modules
 COPY --from=python-build /misp-modules /misp-modules
 COPY --from=python-build /misp-modules-commit /home/misp-modules/
 COPY --chmod=755 misp-modules.py /usr/bin/misp-modules
 USER misp-modules
-RUN /usr/bin/misp-modules --test
+RUN /usr/bin/misp-modules --test --custom /modules
 
 EXPOSE 6666/tcp
-CMD ["/usr/bin/misp-modules", "--listen", "0.0.0.0"]
+CMD ["/usr/bin/misp-modules", "--listen", "0.0.0.0", "--custom", "/modules"]
 HEALTHCHECK CMD curl -s localhost:6666/healthcheck

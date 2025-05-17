@@ -2,7 +2,7 @@
 
 Container image for [MISP modules](https://github.com/MISP/misp-modules) based on AlmaLinux 9.
 
-This image is intended to use with [MISP](https://github.com/MISP/misp) image.
+This image is intended to use it with [MISP](https://github.com/MISP/misp) image.
 
 ## Usage
 
@@ -22,8 +22,12 @@ Then you can run container from this image:
 
 * `SENTRY_DSN` (optional, string) - Sentry DSN for exception logging
 
+### Custom modules
+
+You can include custom modules by coping them into `/modules/(action_mod,expansion,export_mod,import_mod)` directory.
+
 ## License
 
 This software is licensed under GNU General Public License version 3. MISP modules is licensed under GNU Affero General Public License version 3.
 
-* Copyright (C) 2022-2024 [National Cyber and Information Security Agency of the Czech Republic (NÚKIB)](https://nukib.gov.cz/en/) 🇨🇿
+* Copyright (C) 2022-2025 [National Cyber and Information Security Agency of the Czech Republic (NÚKIB)](https://nukib.gov.cz/en/) 🇨🇿
