@@ -40,6 +40,11 @@ jobs:
         tags: ${{ env.TEST_TAG }}
         cache-from: type=local,src=/tmp/.buildx-cache/amd64
         cache-to: type=local,dest=/tmp/.buildx-cache-new/amd64,mode=max
+    -
+      name: Show image details
+      run: |
+        docker image inspect ${{ env.TEST_TAG }}
+        docker image history ${{ env.TEST_TAG }}
     - 
       name: Test
       run: |
