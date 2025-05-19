@@ -8,9 +8,6 @@ on:
   schedule:
     - cron: '0 3 1,15 * *'
 
-env:
-  TEST_TAG: misp-modules:latest
-
 jobs:
   build:
     runs-on: ${{ matrix.runner }}
@@ -37,18 +34,20 @@ jobs:
       with:
         context: .
         load: true
-        tags: ${{ env.TEST_TAG }}
+        tags: |
+          nukib/misp-modules:latest
+          ghcr.io/nukib/misp-modules:latest
         cache-from: type=local,src=/tmp/.buildx-cache/amd64
         cache-to: type=local,dest=/tmp/.buildx-cache-new/amd64,mode=max
     -
       name: Show image details
       run: |
-        docker image inspect ${{ env.TEST_TAG }}
-        docker image history ${{ env.TEST_TAG }}
+        docker image inspect nukib/misp-modules:latest
+        docker image history nukib/misp-modules:latest
     - 
       name: Test
       run: |
-        docker run --name misp-modules --rm -p 127.0.0.1:6666:6666 ${{ env.TEST_TAG }} &
+        docker run --name misp-modules --rm -p 127.0.0.1:6666:6666 nukib/misp-modules:latest &
         sleep 10 # Wait until container is ready
         curl --fail http://localhost:6666/modules | jq
         docker stop misp-modules
@@ -81,7 +80,6 @@ jobs:
       if: github.event_name != 'pull_request'
       uses: docker/build-push-action@v6
       with:
-        context: .
         push: true
         tags: |
           nukib/misp-modules:latest
