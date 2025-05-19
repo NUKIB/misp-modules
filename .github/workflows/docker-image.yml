@@ -48,7 +48,7 @@ jobs:
       name: Test
       run: |
         docker run --name misp-modules --rm -p 127.0.0.1:6666:6666 nukib/misp-modules:latest &
-        sleep 10 # Wait until container is ready
+        sleep 5 # Wait until container is ready
         curl --fail http://localhost:6666/modules | jq
         docker stop misp-modules
     -
