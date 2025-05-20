@@ -70,12 +70,21 @@ jobs:
         username: ${{ github.repository_owner }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
+    - name: Login to DockerHub
+      if: github.event_name != 'pull_request'
+      uses: docker/login-action@v3
+      with:
+        username: nukib
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
     - name: Push by digest
       if: github.event_name != 'pull_request'
       id: build
       uses: docker/build-push-action@v6
       with:
-        tags: ${{ env.REGISTRY_IMAGE }}
+        tags: |
+          ${{ env.REGISTRY_IMAGE }}
+          nukib/misp-modules
         outputs: type=image,push-by-digest=true,name-canonical=true,push=true
 
     - name: Export digest
@@ -116,7 +125,14 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: nukib
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
       - name: Create manifest list and push
         working-directory: ${{ runner.temp }}/digests
         run: |
           docker buildx imagetools create --tag ${{ env.REGISTRY_IMAGE }}:latest $(printf '${{ env.REGISTRY_IMAGE }}@sha256:%s ' *)
+          docker buildx imagetools create --tag nukib/misp-modules:latest $(printf 'nukib/misp-modules@sha256:%s ' *)
