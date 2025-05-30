@@ -38,7 +38,7 @@ RUN --mount=type=tmpfs,target=/tmp source scl_source enable gcc-toolset-14 && \
     pip3 --no-cache-dir wheel --wheel-dir /tmp/wheels -r requirements.txt && \
     pip3 --no-cache-dir wheel --no-deps --wheel-dir /tmp/wheels . && \
     python3 -m venv /misp-modules && \
-    /misp-modules/bin/pip --no-cache-dir install /tmp/wheels/* sentry-sdk==2.16.0 && \
+    /misp-modules/bin/pip --no-cache-dir install /tmp/wheels/* sentry-sdk==2.29.1 && \
     echo $COMMIT > /misp-modules-commit
 
 # Final image
