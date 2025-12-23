@@ -18,14 +18,14 @@ RUN set -x && \
 FROM base AS python-build
 RUN dnf install -y dnf-plugins-core && \
     dnf config-manager --set-enabled crb && \
-    dnf install -y --setopt=install_weak_deps=False python${PYTHON_VERSION}-devel python${PYTHON_VERSION}-pip python${PYTHON_VERSION}-wheel gcc-toolset-14 git-core poppler-cpp-devel && \
+    dnf install -y --setopt=install_weak_deps=False python${PYTHON_VERSION}-devel python${PYTHON_VERSION}-pip python${PYTHON_VERSION}-wheel gcc-toolset-15 git-core poppler-cpp-devel && \
     rm -rf /var/cache/dnf && \
     alternatives --install /usr/bin/pip3 pip /usr/bin/pip${PYTHON_VERSION} 50 && \
     curl --proto '=https' --tlsv1.3 -sSL https://install.python-poetry.org | python3 - && \
     /root/.local/bin/poetry self add poetry-plugin-export
 ARG MISP_MODULES_VERSION=main
 ENV POETRY_CACHE_DIR=/tmp/pypoetry/
-RUN --mount=type=tmpfs,target=/tmp source scl_source enable gcc-toolset-14 && \
+RUN --mount=type=tmpfs,target=/tmp source scl_source enable gcc-toolset-15 && \
     set -x && \
     mkdir /tmp/source && \
     cd /tmp/source && \
